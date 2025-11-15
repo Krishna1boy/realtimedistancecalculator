@@ -2,6 +2,7 @@
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const resetBtn = document.getElementById('resetBtn');
+const modeToggle = document.getElementById('modeToggle');
 const distanceEl = document.getElementById('distance');
 const speedEl = document.getElementById('speed');
 const timeEl = document.getElementById('time');
@@ -30,6 +31,7 @@ let simulationInterval = null;
 startBtn.addEventListener('click', startTracking);
 stopBtn.addEventListener('click', stopTracking);
 resetBtn.addEventListener('click', resetTracking);
+modeToggle.addEventListener('change', handleModeToggle);
 
 // Check for simulation mode on page load
 window.addEventListener('load', () => {
@@ -37,26 +39,52 @@ window.addEventListener('load', () => {
 });
 
 function checkDeviceCapability() {
-    // Detect if device likely has real GPS (mobile device)
+    // Detect device type and set default mode
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    if (!isMobile) {
-        const useSimulation = confirm(
-            '⚠️ LAPTOP DETECTED\n\n' +
-            'This device appears to be a laptop without real GPS.\n\n' +
-            'For REAL usage:\n' +
-            '• Use a smartphone or tablet with GPS\n' +
-            '• Go outdoors and move (walk/run/bike)\n\n' +
-            'Would you like to enable DEMO MODE for testing?\n' +
-            '(Simulates movement with random speed)'
-        );
+    console.log('Device check:', {
+        userAgent: navigator.userAgent,
+        isMobile: isMobile
+    });
 
-        if (useSimulation) {
-            simulationMode = true;
-            gpsStatusEl.textContent = 'Demo Mode Ready';
-            gpsStatusEl.style.color = '#3b82f6';
-        }
+    if (!isMobile) {
+        // Desktop/laptop - default to demo mode
+        modeToggle.checked = true;
+        simulationMode = true;
+        gpsStatusEl.textContent = 'Demo Mode Ready';
+        gpsStatusEl.style.color = '#3b82f6';
+        console.log('Desktop detected - Demo mode ON by default');
+    } else {
+        // Mobile - default to real GPS
+        modeToggle.checked = false;
+        simulationMode = false;
+        gpsStatusEl.textContent = 'Real GPS Ready';
+        gpsStatusEl.style.color = '#10b981';
+        console.log('Mobile detected - Real GPS ON by default');
     }
+}
+
+function handleModeToggle() {
+    if (isTracking) {
+        alert('Please stop tracking before changing mode');
+        modeToggle.checked = !modeToggle.checked; // Revert toggle
+        return;
+    }
+
+    simulationMode = modeToggle.checked;
+
+    if (simulationMode) {
+        gpsStatusEl.textContent = 'Demo Mode Ready';
+        gpsStatusEl.style.color = '#3b82f6';
+        console.log('Switched to DEMO MODE');
+    } else {
+        gpsStatusEl.textContent = 'Real GPS Ready';
+        gpsStatusEl.style.color = '#10b981';
+        console.log('Switched to REAL GPS MODE');
+    }
+
+    // Reset tracking data when switching modes
+    resetTracking();
 }
 
 function startTracking() {
